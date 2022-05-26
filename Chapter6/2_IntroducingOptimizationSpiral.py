@@ -134,7 +134,7 @@ for iteration in range(10000):
     # if new solution produces less loss then the previous 
     # then mark these weights and biases as new best variables
     if loss < lowest_loss:
-        print(f'New set of weights found, iteration: {iteration}\nloss: {loss}\nacc: {accuracy}')
+        print(f'New set of weights found, iteration: {iteration}\nloss: {loss}\nacc: {accuracy}\n')
         best_dense1_weights = dense1.weights.copy()
         best_dense1_biases = dense1.biases.copy()
         best_dense2_weights = dense2.weights.copy()
