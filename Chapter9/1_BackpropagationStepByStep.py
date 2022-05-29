@@ -94,3 +94,26 @@ dx = [drelu_dx0, drelu_dx1, drelu_dx2]
 dw = [drelu_dw0, drelu_dw1, drelu_dw2]
 db = drelu_db
 
+print(w, b)
+
+w[0] += -0.001 * dw[0]
+w[1] += -0.001 * dw[1]
+w[2] += -0.001 * dw[2]
+b += -0.001 * db
+
+print(w, b)
+
+# Multiplying inputs by weights
+xw0 = x[0] * w[0]
+xw1 = x[1] * w[1]
+xw2 = x[2] * w[2]
+
+# Adding
+z = xw0 + xw1 + xw2 + b
+# ReLU activation function
+y = max(z, 0)
+print(y)
+
+# We’ve successfully decreased this neuron’s output from 6.000 to 5.985. Note that it does not
+# make sense to decrease the neuron’s output in a real neural network; we were doing this purely
+# as a simpler exercise than the full network.
