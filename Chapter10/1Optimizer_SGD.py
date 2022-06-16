@@ -1,4 +1,21 @@
+import nnfs
+from nnfs.datasets import spiral_data
 import numpy as np
+
+
+# SGD (Stochastic Gradient Descent) optimizer
+class Optimizer_SGD:
+
+    #Initilize optimizer - set settings, 
+    # learning rate of 1. Is defualt ofr this optimizer
+    def __init__(self, learning_rate=1):
+        self.learning_rate = learning_rate
+
+    # Update parameters
+    def update_params(self, layer):
+        layer.weights += -self.learning_rate * layer.dweights
+        layer.biases += -self.learning_rate * layer.dbiases
+
 
 class Layer_Dense:
 
@@ -19,7 +36,7 @@ class Layer_Dense:
         self.dweights = np.dot(self.inputs.T, dvalues)
         self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
         # Gradient on values
-        self.dinputs = np.dot(dvalues, self.weights.T)
+        self.dinputs = np.dot(dvalues, self.dweights.T)
 
 
 # ReLU activation
@@ -157,26 +174,52 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
         # Normalize gradient
         self.dinputs = self.dinputs / samples
 
-# to test it let's make up the softmax outputs and backpropagate them
-softmax_outputs = np.array([[0.7, 0.1, 0.2]
-                            ,[0.1, 0.5, 0.4]
-                            ,[0.02, 0.9, 0.08]])
 
-class_targets = np.array([0, 1, 1])
 
-# comparison of two methods
+# Create dataset
+X, y = spiral_data(samples=100, classes=3)
+# Create Dense layer with 2 input features and 64 output values
+dense1 = Layer_Dense(2, 64)
+# Create ReLU activation (to be used with Dense layer):
+activation1 = Activation_ReLU()
+# Create second Dense layer with 64 input features (as we take output
+# of previous layer here) and 3 output values (output values)
+dense2 = Layer_Dense(64, 3)
+# Create Softmax classifier's combined loss and activation
+loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
+# Create optimizer
+optimizer = Optimizer_SGD(learning_rate=.85)
 
-# method 1 (faster)
-softmax_loss = Activation_Softmax_Loss_CategoricalCrossentropy()
-softmax_loss.backward(softmax_outputs, class_targets)
-dvalues1 = softmax_loss.dinputs
+# Train in loop
+for epoch in range(10001):
+    # Perform a forward pass of our training data through this layer
+    dense1.forward(X)
+    # Perform a forward pass through activation function
+    # takes the output of first dense layer here
+    activation1.forward(dense1.output)
+    # Perform a forward pass through second Dense layer
+    # takes outputs of activation function of first layer as inputs
+    dense2.forward(activation1.output)
+    # Perform a forward pass through the activation/loss function
+    # takes the output of second dense layer here and returns loss
+    loss = loss_activation.forward(dense2.output, y)
 
-# method 2 (slower)
-activation = Activation_Softmax()
-activation.output = softmax_outputs
-loss = Loss_CategoricalCrossentropy()
-loss.backward(softmax_outputs, class_targets)
-activation.backward(loss.dinputs)
-dvalues2 = activation.dinputs
-print(f'Gradients: combined loss and activation: \n{dvalues1}\n')
-print(f'Gradients: separate loss and activation: \n{dvalues2}\n')
+    # Calculate accuracy from output of activation2 and targets
+    # calculate values along first axis
+    predictions = np.argmax(loss_activation.output, axis=1)
+    if len(y.shape) == 2:
+        y = np.argmax(y, axis=1)
+    accuracy = np.mean(predictions==y)
+
+    if not epoch % 100:
+        print(f'epoch: {epoch}, acc: {accuracy:.3f}, loss: {loss:.3f}')
+
+    # Backward pass
+    loss_activation.backward(loss_activation.output, y)
+    dense2.backward(loss_activation.dinputs)
+    activation1.backward(dense2.dinputs)
+    dense1.backward(activation1.dinputs)
+    # Update weights and biases
+    optimizer.update_params(dense1)
+    optimizer.update_params(dense2)
+
