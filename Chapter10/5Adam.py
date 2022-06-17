@@ -404,7 +404,6 @@ for epoch in range(10001):
     optimizer.update_params(dense1)
     optimizer.update_params(dense2)
     optimizer.post_update_params()
-<<<<<<< HEAD:Chapter10/5Adam
 
 # Create test dataset
 X_test, y_test = spiral_data(samples=100, classes=3)
@@ -429,5 +428,3 @@ if len(y_test.shape) == 2:
 accuracy = np.mean(predictions==y_test)
 
 print(f'validation, acc: {accuracy:.3f}, loss: {loss:.3f}')
-=======
->>>>>>> fdaef0f2676729622ac71f872b124892be48b117:Chapter10/5Adam.py
